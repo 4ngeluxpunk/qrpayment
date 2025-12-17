@@ -1,6 +1,6 @@
 <?php
 /**
- * Módulo de Pagos QR - Versión 4.0.1 (Security Fix)
+ * Módulo de Pagos QR - Versión 4.0.1 (Security Fix + Sortable Apps)
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -15,7 +15,7 @@ class QrPayment extends PaymentModule
     {
         $this->name = 'qrpayment';
         $this->tab = 'payments_gateways';
-        $this->version = '4.0.0'; // Incrementamos versión por seguridad
+        $this->version = '4.0.0'; // Incrementamos versión por nueva funcionalidad
         $this->author = 'Experto PrestaShop';
         $this->need_instance = 1;
         $this->bootstrap = true;
@@ -110,7 +110,7 @@ class QrPayment extends PaymentModule
             $state->delivery = false;
             $state->logable = false;
             $state->invoice = false;
-            $state->module_name = $this->name; // Buena práctica vincularlo al módulo
+            $state->module_name = $this->name; 
             
             if ($state->add()) {
                 Configuration::updateValue('QR_PAYMENT_STATE_ID', (int)$state->id);
@@ -123,14 +123,12 @@ class QrPayment extends PaymentModule
 
     public function hookHeader()
     {
-        // Solo cargar CSS/JS en las páginas necesarias para mejorar WPO
         if (Tools::getIsset('configure') && Tools::getValue('configure') == $this->name) {
              $this->context->controller->addCSS($this->_path . 'views/css/qrpayment_admin.css', 'all');
              $this->context->controller->addJS($this->_path . 'views/js/admin_qrpayment.js');
              return;
         }
 
-        // Cargar en checkout y en validation
         $controller = $this->context->controller->php_self;
         if ($controller == 'order' || $controller == 'order-opc' || $this->context->controller instanceof QrPaymentValidationModuleFrontController) {
             $this->context->controller->addCSS($this->_path . 'views/css/qrpayment.css', 'all');
@@ -180,11 +178,39 @@ class QrPayment extends PaymentModule
     {
         $base_url = AdminController::$currentIndex . '&configure=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules');
 
+        // --- LÓGICA DE REORDENAMIENTO AJAX ---
+        if (Tools::getValue('action') == 'updatePositions') {
+            // Intentar obtener ID desde 'id' o desde keys del POST
+            $id_app = (int)Tools::getValue('id'); 
+            
+            if (!$id_app) { 
+                $keys = array_keys($_POST);
+                foreach ($keys as $key) {
+                    if (strpos($key, 'qrpayment_apps_') !== false) {
+                        // Formato esperado: qrpayment_apps_ID
+                        $parts = explode('_', $key);
+                        $id_app = (int)end($parts);
+                        break;
+                    }
+                }
+            }
+            
+            if (!$id_app) $id_app = (int)Tools::getValue('id_app');
+
+            $position = (int)Tools::getValue('position'); // Índice nuevo (0, 1, 2...)
+            
+            $this->updateAppPosition($id_app, $position);
+            exit; // Terminamos ejecución para responder al AJAX
+        }
+        // -------------------------------------
+
         if (Tools::isSubmit('statusqrpayment_apps') && $id_app = (int)Tools::getValue('id_app')) {
             $this->toggleStatus($id_app);
             Tools::redirectAdmin($base_url . '&conf=5');
         }
 
+        // Esta lógica legacy se mantiene por si se llama manualmente, 
+        // pero la lógica principal ahora está arriba en el bloque AJAX
         if (Tools::isSubmit('updatePosition') && Tools::isSubmit('id_app')) {
             $this->updateAppPosition((int)Tools::getValue('id_app'), (int)Tools::getValue('position'));
         }
@@ -216,23 +242,52 @@ class QrPayment extends PaymentModule
         return $msg . $this->renderGlobalForm() . $this->renderAppList();
     }
 
-    public function updateAppPosition($id_app, $position)
+    public function updateAppPosition($id_app, $new_position)
     {
-        $result = (bool)Db::getInstance()->execute('
-            UPDATE `' . _DB_PREFIX_ . 'qrpayment_apps` SET
-            `position` = ' . (int)$position . '
-            WHERE `id_app` = ' . (int)$id_app
+        $id_app = (int)$id_app;
+        $new_position = (int)$new_position;
+
+        // 1. Obtener la posición actual
+        $old_position = (int)Db::getInstance()->getValue(
+            'SELECT `position` FROM `'._DB_PREFIX_.'qrpayment_apps` WHERE `id_app` = '.$id_app
         );
-        // Respuesta segura para AJAX
-        if (Tools::isSubmit('updatePosition')) {
-            die(json_encode(['hasError' => !$result]));
+
+        if ($old_position == $new_position) {
+            return true;
+        }
+
+        // 2. Reordenar elementos adyacentes para hacer espacio
+        // Si bajamos (ej. pos 0 -> 2): Restamos 1 a los intermedios
+        if ($new_position > $old_position) {
+            $sql = 'UPDATE `'._DB_PREFIX_.'qrpayment_apps` 
+                    SET `position` = `position` - 1 
+                    WHERE `position` > ' . $old_position . ' AND `position` <= ' . $new_position;
+        } else {
+            // Si subimos (ej. pos 2 -> 0): Sumamos 1 a los intermedios
+            $sql = 'UPDATE `'._DB_PREFIX_.'qrpayment_apps` 
+                    SET `position` = `position` + 1 
+                    WHERE `position` >= ' . $new_position . ' AND `position` < ' . $old_position;
+        }
+        
+        Db::getInstance()->execute($sql);
+
+        // 3. Mover el elemento a su nueva posición
+        $result = Db::getInstance()->execute('
+            UPDATE `' . _DB_PREFIX_ . 'qrpayment_apps` SET
+            `position` = ' . $new_position . '
+            WHERE `id_app` = ' . $id_app
+        );
+        
+        // Respuesta para llamadas directas
+        if (Tools::getValue('ajax')) {
+            // Nota: El exit está en getContent, pero esto asegura compatibilidad
+            return $result;
         }
     }
 
     protected function postProcessApp() {
         $name = Tools::getValue('name');
         
-        // SEGURIDAD EN SUBIDA DE IMAGENES BACKOFFICE
         $icon_path = Tools::getValue('current_icon');
         if (isset($_FILES['icon_path']) && !empty($_FILES['icon_path']['tmp_name'])) {
             if ($error = ImageManager::validateUpload($_FILES['icon_path'], 4000000)) {
@@ -272,21 +327,14 @@ class QrPayment extends PaymentModule
         if ($id = (int)Tools::getValue('id_app')) {
             Db::getInstance()->update('qrpayment_apps', $data, 'id_app = ' . $id);
         } else {
+            // Al crear, asignamos la última posición + 1
             $max = (int)Db::getInstance()->getValue('SELECT MAX(position) FROM '._DB_PREFIX_.'qrpayment_apps');
             $data['position'] = $max + 1;
             Db::getInstance()->insert('qrpayment_apps', $data);
         }
     }
 
-    // ... (Métodos renderGlobalForm, renderAppList, renderAppForm se mantienen prácticamente igual, 
-    // solo asegúrate de usar (int) al recuperar valores de la DB o pSQL al insertar si haces consultas manuales)
-
     protected function renderGlobalForm() {
-        // (Código original se mantiene, es seguro porque usa HelperForm)
-        // ... (Copia el contenido original aquí) ...
-        // Para brevedad, asumo que mantienes el código original de renderGlobalForm
-        
-        // REPETIR CODIGO ORIGINAL DE renderGlobalForm
         $states = OrderState::getOrderStates($this->context->language->id);
         
         $fields_form = [['form' => [
@@ -314,8 +362,6 @@ class QrPayment extends PaymentModule
     }
 
     protected function renderAppList() {
-        // (Código original se mantiene)
-        // REPETIR CODIGO ORIGINAL DE renderAppList
         $apps = Db::getInstance()->executeS("SELECT * FROM "._DB_PREFIX_."qrpayment_apps ORDER BY position ASC");
         $count = count($apps); 
         
@@ -324,10 +370,14 @@ class QrPayment extends PaymentModule
         $helper->simple_header = false;
         $helper->actions = ['edit', 'delete']; 
         $helper->identifier = 'id_app';
-        $helper->position_identifier = 'position';
-        $helper->position_identifier_field = 'position';
         
-        $helper->list_id = 'qrpayment_apps_list';
+        // --- CONFIGURACIÓN DRAG & DROP ---
+        $helper->position_identifier = 'position'; // Campo de BD
+        $helper->orderBy = 'position';             
+        $helper->orderWay = 'ASC';
+        // ---------------------------------
+        
+        $helper->list_id = 'qrpayment_apps'; // ID para el AJAX
         $helper->is_module = true; 
         
         $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
@@ -343,6 +393,14 @@ class QrPayment extends PaymentModule
         ];
 
         $fields_list = [
+            // Nueva columna de Posición
+            'position' => [
+                'title' => $this->l('Orden'),
+                'filter_key' => 'a!position',
+                'align' => 'center',
+                'class' => 'fixed-width-xs',
+                'position' => 'position' // Habilita flechas y DND
+            ],
             'id_app' => ['title' => $this->l('ID'), 'align' => 'center', 'class' => 'fixed-width-xs'],
             'name' => ['title' => $this->l('Nombre')],
             'active' => ['title' => $this->l('Activo'), 'align' => 'center', 'active' => 'status', 'type' => 'bool', 'orderby' => false],
@@ -363,8 +421,6 @@ class QrPayment extends PaymentModule
     }
 
     protected function renderAppForm() {
-        // (Código original se mantiene)
-        // REPETIR CODIGO ORIGINAL DE renderAppForm
         $id_app = (int)Tools::getValue('id_app');
         $app = $id_app ? Db::getInstance()->getRow("SELECT * FROM "._DB_PREFIX_."qrpayment_apps WHERE id_app = $id_app") : [];
         
@@ -419,7 +475,6 @@ class QrPayment extends PaymentModule
         $file = 'voucher_' . $id_order . '.jpg';
         $path = _PS_ROOT_DIR_ . '/img/vouchers/' . $file;
         
-        // Uso de file_exists básico para rendimiento, aunque Tools::file_exists_cache es opción
         $url = file_exists($path) ? __PS_BASE_URI__ . 'img/vouchers/' . $file : false;
         
         $this->context->smarty->assign(['voucher_img' => $url]);
