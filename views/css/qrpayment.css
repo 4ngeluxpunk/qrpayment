@@ -1,0 +1,278 @@
+/* --- Checkout --- */
+.qr-app-list { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 15px; }
+.qr-app-item {
+    border: 2px solid #e5e5e5; border-radius: 8px; padding: 10px; cursor: pointer;
+    position: relative; width: 90px; height: 90px; display: flex; align-items: center; justify-content: center;
+    background: #fff; transition: all 0.3s ease; opacity: 0.6; filter: grayscale(80%);
+}
+.qr-app-item:hover { border-color: #aaa; opacity: 1; filter: grayscale(0%); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+.qr-app-item.selected {
+    border-color: #2fb5d2; box-shadow: 0 0 0 3px rgba(47,181,210,0.2);
+    opacity: 1; filter: grayscale(0%); transform: scale(1.05);
+}
+.qr-app-item img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.qr-check { position: absolute; top: -8px; right: -8px; color: #2fb5d2; background: white; border-radius: 50%; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.qr-app-item.selected .qr-check { display: block; }
+.qr-app-item.selected .qr-check i { font-size: 18px; display: block; }
+.qr-desc { margin-bottom: 10px; font-size: 1.1em; color: #555; }
+
+
+/* --- QR MODAL OVERLAY (Contenedor principal del popup) --- */
+.qr-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+/* Contenedor del Modal */
+.qr-modal {
+    background: #ffffff;
+    border-radius: 12px; /* Redondear bordes del modal */
+    /box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);*/
+    width: 90%;
+    max-width: 450px; /* Ancho moderado */
+    animation: fadeIn 0.3s ease-out;
+    overflow: hidden; /* Para contener los bordes redondeados */
+}
+
+/* Header del Modal */
+.qr-modal-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f7f7f7; /* Fondo sutil para el header */
+}
+
+/* Título del Modal */
+.qr-modal-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #333;
+}
+
+/* Botón de Cerrar */
+.qr-modal-header .close-modal-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #888;
+    transition: color 0.2s;
+}
+.qr-modal-header .close-modal-btn:hover {
+    color: #333;
+}
+
+/* Body del Modal (General) */
+.qr-modal-body {
+    padding: 30px; /* Más padding para aire */
+    text-align: center;
+}
+
+/* ====================================================== */
+/* --- POPUP 2: ESTILOS DE PASO 1 (INFO) y PASO 2 (UPLOAD) --- */
+/* ====================================================== */
+
+/* Paso 1: Información de Pago */
+
+/* Etiqueta / Texto */
+.qr-modern-label {
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 5px;
+    display: block;
+    font-size: 0.95rem;
+}
+
+/* Caja del Teléfono / CBU (Lo que se copia) */
+.qr-phone-box { /* Mantenemos qr-phone-box por compatibilidad pero mejoramos el estilo */
+    background: #e9f7fd; /* Azul claro para destacar */
+    border: 1px solid #2fb5d2;
+    border-radius: 8px;
+    padding: 15px;
+    font-size: 1.6em;
+    font-weight: 700;
+    margin: 10px 0 5px 0;
+    color: #00567a;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+}
+.qr-phone-box:hover {
+    background: #d4eff9;
+}
+/* Feedback de copiado */
+.qr-copy-feedback {
+    display: none; /* Inicialmente oculto, lo muestra JS */
+    color: #28a745;
+    font-weight: bold;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    height: 1.2em;
+}
+
+/* Imagen QR (Rediseñada) */
+.qr-big-img-container {
+    text-align: center;
+    margin: 20px 0;
+    padding: 15px;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    background: #fff;
+}
+.qr-big-img {
+    max-width: 180px; /* QR más compacto */
+    margin: 0 auto;
+    display: block;
+    border: none; /* Quitamos el borde redundante */
+    padding: 0;
+}
+
+/* Monto a Pagar */
+.qr-amount-wrapper {
+    background: #f7f7f7;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+.qr-amount-label {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.qr-amount-display {
+    font-size: 2.2em;
+    font-weight: 800;
+    color: #2fb5d2;
+    margin: 5px 0 0 0;
+}
+
+/* Límite Máximo */
+.qr-max-amount-container {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #dc3545;
+    background: #fff5f5;
+    padding: 5px 10px;
+    border-radius: 5px;
+    display: inline-block !important; /* Asegurar que se muestre como bloque cuando sea necesario */
+}
+.qr-max-amount-container i {
+    font-size: 0.9em;
+    vertical-align: middle;
+}
+
+/* Botón Continuar */
+.btn-continue-custom {
+    background-color: #2fb5d2;
+    border-color: #2fb5d2;
+    color: white;
+    font-weight: 700;
+    font-size: 1.1em;
+    padding: 15px;
+    margin-top: 15px;
+    width: 100%;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 10px rgba(47, 181, 210, 0.3);
+    transition: background-color 0.2s, transform 0.2s;
+}
+.btn-continue-custom:hover {
+    background-color: #2592a9;
+    transform: translateY(-1px);
+}
+
+/* Paso 2: Subir Voucher (Diseño de la Imagen 2) */
+
+.qr-upload-header {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 5px;
+}
+.qr-upload-subheader {
+    font-size: 0.9rem;
+    color: #777;
+    margin-bottom: 25px;
+}
+
+.qr-upload-area { /* Mantenemos qr-upload-area pero con nuevo diseño */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 180px; /* Área grande para arrastrar/clic */
+    border: 3px dashed #ccc;
+    border-radius: 12px;
+    background: #fdfdfd;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 20px;
+}
+.qr-upload-area:hover {
+    border-color: #2fb5d2;
+    background: #f4fcff;
+}
+.qr-upload-area i.material-icons {
+    font-size: 48px;
+    color: #bbb;
+    margin-bottom: 10px;
+}
+.qr-upload-area span {
+    font-weight: 600;
+    color: #555;
+    margin-top: 5px;
+}
+.qr-upload-area input[type="file"] {
+    display: none;
+}
+
+/* Previsualización del Nombre del Archivo */
+#file-name-preview {
+    margin-top: 15px;
+    color: #2fb5d2;
+    font-weight: 600;
+}
+
+/* Acciones (Botones Atrás y Finalizar) */
+.qr-modal-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 30px;
+}
+.qr-modal-actions .btn {
+    padding: 12px 20px;
+    font-weight: 700;
+    border-radius: 8px;
+}
+.qr-modal-actions .btn-secondary {
+    flex: 1;
+    background-color: #eee;
+    color: #555;
+    border: 1px solid #ccc;
+}
+.qr-modal-actions .btn-success {
+    flex: 2; /* Finalizar es más prominente */
+    background-color: #28a745;
+    border: none;
+    color: white;
+    text-transform: uppercase;
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+.qr-modal-actions .btn-success:hover {
+    background-color: #1e873f;
+}
