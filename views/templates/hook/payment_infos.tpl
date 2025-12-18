@@ -5,7 +5,7 @@
     <div class="qr-app-list">
         {foreach from=$qr_apps item=app name=apps}
             <div class="qr-app-item {if $smarty.foreach.apps.first}selected{/if}"
-                 data-id="{$app.id_app}"
+                 data-id="{$app.id_qrpayment}"
                  data-name="{$app.name}"
                  data-phone="{$app.phone}"
                  data-max-amount="{$app.formatted_max_amount}"
@@ -18,22 +18,23 @@
         {/foreach}
     </div>
 
-    <input type="hidden" id="selected_qr_app_id" value="{if isset($qr_apps[0])}{$qr_apps[0].id_app}{/if}">
+    <input type="hidden" id="selected_qr_app_id" value="{if isset($qr_apps[0])}{$qr_apps[0].id_qrpayment}{/if}">
 </div>
 
 <div id="qr-modal-overlay" class="qr-modal-overlay" style="display:none;">
     <div class="qr-modal">
         <div class="qr-modal-header">
+            <!-- Título dinámico -->
             <h3 id="qr-modal-title"></h3>
             <button type="button" class="close-modal-btn" onclick="closeQrModal()"><i class="material-icons">close</i></button>
         </div>
 
         <div class="qr-modal-body">
             {* ------------------------------------------- *}
-            {* Paso 1: Información y Código QR *}
+            {* Paso 1: Información y Código QR (Diseño mejorado) *}
             {* ------------------------------------------- *}
             <div id="qr-step-info">
-                <p class="qr-modern-label">{l s='Datos de Transferencia' mod='qrpayment'}</p>
+                <p class="qr-modern-label">{l s='Copiar Numero de teléfono' mod='qrpayment'}</p>
 
                 <div id="qr-modal-phone" class="qr-phone-box" onclick="copyPhoneNumber()"></div>
                 <div id="qr-copy-feedback" class="qr-copy-feedback">{l s='¡Copiado al portapapeles!' mod='qrpayment'}</div>
@@ -50,9 +51,13 @@
                     <div class="qr-amount-display">
                         {Context::getContext()->currentLocale->formatPrice(Context::getContext()->cart->getOrderTotal(true, Cart::BOTH), Context::getContext()->currency->iso_code)}
                     </div>
+                    <br>
+                    <p class="qr-text-label">
+                        {l s='Escanee el código QR o agregue nuestro número de teléfono celular, cuando realice el pago, haga clic en el botón Continuar' mod='qrpayment'}
+                    </p>
                 </div>
 
-                {* Monto Máximo *}
+                {* Monto Máximo (Opcional) *}
                 <p id="qr-modal-max-amount-container" style="display:none;" class="qr-max-amount-container">
                     <i class="material-icons">warning</i>
                     {l s='Monto Máximo de Transferencia:' mod='qrpayment'} <span id="qr-modal-max-amount-value"></span>
@@ -64,7 +69,7 @@
             </div>
 
             {* ------------------------------------------- *}
-            {* Paso 2: Subir Voucher *}
+            {* Paso 2: Subir Voucher (Diseño de la Imagen 2) *}
             {* ------------------------------------------- *}
             <div id="qr-step-upload" style="display:none;">
                 <h4 class="qr-upload-header">{l s='Adjuntar Comprobante' mod='qrpayment'}</h4>
@@ -76,20 +81,14 @@
 
                     <label class="qr-upload-area">
                         <i class="material-icons">cloud_upload</i>
-                        <span>{l s='CLIC AQUÍ para seleccionar el archivo (JPG, PNG)' mod='qrpayment'}</span>
-                        <input type="file" name="payment_voucher" required accept=".jpg, .jpeg, .png, .gif, image/*" onchange="previewFile(this)">
+                        <span>{l s='CLIC AQUÍ para seleccionar el archivo (JPG, PNG o PDF)' mod='qrpayment'}</span>
+                        <input type="file" name="payment_voucher" required accept="image/*" onchange="previewFile(this)">
                     </label>
-                    
                     <div id="file-name-preview" class="small text-center"></div>
-
-                    <div id="qr-error-msg" class="alert alert-danger" style="display:none; margin-top:10px; font-weight:bold;"></div>
 
                     <div class="qr-modal-actions">
                         <button type="button" class="btn btn-secondary" onclick="goToStep1()">{l s='ATRÁS' mod='qrpayment'}</button>
-                        
-                        <button type="button" class="btn btn-success" onclick="validateAndSubmitQr()">
-                            {l s='FINALIZAR PEDIDO' mod='qrpayment'}
-                        </button>
+                        <button type="submit" class="btn btn-success">{l s='FINALIZAR PEDIDO' mod='qrpayment'}</button>
                     </div>
                 </form>
             </div>

@@ -34,12 +34,15 @@
 /* Contenedor del Modal */
 .qr-modal {
     background: #ffffff;
-    border-radius: 12px; /* Redondear bordes del modal */
-    /box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);*/
-    width: 90%;
-    max-width: 450px; /* Ancho moderado */
+    border-radius: 16px; /* Redondear bordes del modal */
+    width: 100%;
+    max-width: 450px; /* ANCHO AUMENTADO para que no se vea tan delgado */
+    max-height: 100vh; /* ALTO MÁXIMO (90% de la pantalla) para dejar espacio arriba y abajo */
     animation: fadeIn 0.3s ease-out;
-    overflow: hidden; /* Para contener los bordes redondeados */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column; /* Permite separar header y body correctamente */
+    position: relative;
 }
 
 /* Header del Modal */
@@ -99,8 +102,8 @@
     background: #e9f7fd; /* Azul claro para destacar */
     border: 1px solid #2fb5d2;
     border-radius: 8px;
-    padding: 15px;
-    font-size: 1.6em;
+    padding: 10px;
+    font-size: 1.4em;
     font-weight: 700;
     margin: 10px 0 5px 0;
     color: #00567a;
@@ -125,7 +128,6 @@
 /* Imagen QR (Rediseñada) */
 .qr-big-img-container {
     text-align: center;
-    margin: 20px 0;
     padding: 15px;
     border: 1px solid #f0f0f0;
     border-radius: 8px;
@@ -144,10 +146,15 @@
     background: #f7f7f7;
     padding: 15px;
     border-radius: 8px;
-    margin-bottom: 25px;
 }
 .qr-amount-label {
     font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.qr-text-label {
+    font-size: 0.6rem;
     color: #888;
     margin-bottom: 5px;
 }

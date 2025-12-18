@@ -1,5 +1,5 @@
 /**
- * Lógica QR Payment - Validación de Seguridad y UX Mejorada
+ * Lógica QR Payment 3.3.1 - AÑADIDA FUNCIÓN DE COPIADO
  */
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", function() {
         document.body.appendChild(modal);
     }
 
-    // Interceptamos el botón de pago nativo
     var orderButton = document.getElementById('payment-confirmation') ? document.getElementById('payment-confirmation').querySelector('button') : null;
 
     if(orderButton) {
@@ -54,12 +53,16 @@ function openQrModal() {
     var appName = selectedItem.getAttribute('data-name');
     var maxAmount = selectedItem.getAttribute('data-max-amount');
 
+    // Asignar datos al MODAL 2
     document.getElementById('qr-modal-title').innerText = appName;
     document.getElementById('qr-modal-phone').innerText = selectedItem.getAttribute('data-phone');
     document.getElementById('qr-modal-image').src = selectedItem.getAttribute('data-image');
     document.getElementById('qr-modal-app-id-input').value = selectedItem.getAttribute('data-id');
+
+    // Etiqueta de cantidad
     document.getElementById('qr-modal-app-name-label').innerText = appName;
 
+    // Monto Máximo (Mostrar solo si existe)
     var maxAmountContainer = document.getElementById('qr-modal-max-amount-container');
     var maxAmountValue = document.getElementById('qr-modal-max-amount-value');
 
@@ -70,9 +73,6 @@ function openQrModal() {
         maxAmountContainer.style.display = 'none';
     }
 
-    // Resetear errores anteriores
-    document.getElementById('qr-error-msg').style.display = 'none';
-    
     goToStep1();
     document.getElementById('qr-modal-overlay').style.display = 'flex';
 }
@@ -91,59 +91,17 @@ function goToStep2() {
     document.getElementById('qr-step-upload').style.display = 'block';
 }
 
-// VALIDACIÓN ESTRICTA DE IMAGEN AL SELECCIONAR
 function previewFile(input) {
     var fileNamePreview = document.getElementById('file-name-preview');
-    var errorMsg = document.getElementById('qr-error-msg');
-    
-    // Lista blanca de extensiones permitidas
-    var allowedExtensions = /(\.jpg|\.jpeg|\.png|\.gif)$/i;
-
     if(input.files && input.files[0]) {
-        var file = input.files[0];
-        
-        // Validar extensión
-        if (!allowedExtensions.exec(file.name)) {
-            alert('Error de seguridad: Solo se permiten imágenes (JPG, PNG, GIF).');
-            input.value = ''; // Borra el archivo seleccionado
-            fileNamePreview.innerText = '';
-            return false;
-        }
-
-        fileNamePreview.innerText = file.name;
-        // Ocultar mensaje de error si existía
-        errorMsg.style.display = 'none';
+        fileNamePreview.innerText = input.files[0].name;
     } else {
         fileNamePreview.innerText = '';
     }
 }
 
-// VALIDACIÓN AL DAR CLIC EN FINALIZAR PEDIDO
-function validateAndSubmitQr() {
-    var fileInput = document.querySelector('input[name="payment_voucher"]');
-    var errorMsg = document.getElementById('qr-error-msg');
-    
-    // 1. Validar que exista archivo
-    if (!fileInput.files || fileInput.files.length === 0) {
-        errorMsg.innerText = "Falta subir la captura del pago";
-        errorMsg.style.display = 'block';
-        return; 
-    }
-
-    // 2. Validar extensión nuevamente por seguridad
-    var allowedExtensions = /(\.jpg|\.jpeg|\.png|\.gif)$/i;
-    if (!allowedExtensions.exec(fileInput.files[0].name)) {
-        errorMsg.innerText = "Archivo no permitido. Solo imágenes.";
-        errorMsg.style.display = 'block';
-        fileInput.value = ''; // Limpiar input
-        return;
-    }
-
-    // 3. Si todo está bien, enviar formulario
-    document.getElementById('qr-voucher-form').submit();
-}
-
 function showCopyFeedback(feedbackElement) {
+    // Mostrar el feedback y ocultarlo después de 2 segundos
     feedbackElement.style.display = 'block';
     setTimeout(function() {
         feedbackElement.style.display = 'none';
@@ -151,18 +109,27 @@ function showCopyFeedback(feedbackElement) {
 }
 
 function copyFallback(textToCopy, feedbackElement) {
+    // Crear un área de texto temporal
     var tempInput = document.createElement("textarea");
     tempInput.value = textToCopy;
     tempInput.style.position = 'fixed';
     tempInput.style.opacity = '0';
     document.body.appendChild(tempInput);
+
+    // Seleccionar el texto y copiar
     tempInput.select();
     try {
         var successful = document.execCommand('copy');
-        if (successful) showCopyFeedback(feedbackElement);
+        if (successful) {
+            showCopyFeedback(feedbackElement);
+        } else {
+            console.error('Error al copiar (Fallback)');
+        }
     } catch (err) {
         console.error('No se pudo copiar el texto: ', err);
     }
+
+    // Eliminar el área de texto temporal
     document.body.removeChild(tempInput);
 }
 
@@ -170,13 +137,17 @@ function copyPhoneNumber() {
     var textToCopy = document.getElementById('qr-modal-phone').innerText.trim();
     var feedbackElement = document.getElementById('qr-copy-feedback');
 
+    // 1. Usar la API Clipboard moderna (promesa)
     if (navigator.clipboard) {
         navigator.clipboard.writeText(textToCopy).then(function() {
             showCopyFeedback(feedbackElement);
         }).catch(function(err) {
+            console.error('Error al copiar (API): ', err);
+            // Fallback si la API falla o no hay permisos
             copyFallback(textToCopy, feedbackElement);
         });
     } else {
+        // 2. Fallback clásico (document.execCommand)
         copyFallback(textToCopy, feedbackElement);
     }
 }

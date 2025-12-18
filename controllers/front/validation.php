@@ -14,11 +14,11 @@ class QrPaymentValidationModuleFrontController extends ModuleFrontController
         }
 
         // 1. Recuperar ID de la app seleccionada desde el formulario del checkout
-        $id_app = Tools::getValue('qr_app_id');
+        $id_qrpayment = Tools::getValue('qr_app_id');
         
         // 2. Cargar la configuración de la App QR
-        if ($id_app) {
-             $app = Db::getInstance()->getRow("SELECT * FROM " . _DB_PREFIX_ . "qrpayment_apps WHERE id_app = " . (int)$id_app);
+        if ($id_qrpayment) {
+             $app = Db::getInstance()->getRow("SELECT * FROM " . _DB_PREFIX_ . "qrpayment WHERE id_qrpayment = " . (int)$id_qrpayment);
         } else {
              // Si no hay ID, volvemos al carrito para que seleccione
              Tools::redirect('index.php?controller=order&step=1');
