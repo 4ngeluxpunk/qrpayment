@@ -1,7 +1,6 @@
 <?php
 /**
- * Módulo de Pagos QR - Versión 4.2.4 (Clean Config)
- * Eliminado campo de Logo en configuración general.
+ * Módulo de Pagos QR - Versión 4.2.8 (Fixed & Universal)
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -21,35 +20,37 @@ class QrPayment extends PaymentModule
         $this->need_instance = 1;
         $this->bootstrap = true;
         $this->controllers = array('process', 'validation');
-        $this->ps_versions_compliancy = array('min' => '1.7', 'max' => '9.99.99');
+        $this->ps_versions_compliancy = array('min' => '1.7.0', 'max' => '9.99.99');
 
         parent::__construct();
 
         $this->displayName = $this->l('Pagos y Transferencias QR (Global)');
-        $this->description = $this->l('Gestión profesional de pagos QR (Yape, Plin, etc) con validación de comprobantes.');
+        $this->description = $this->l('Gestión profesional de pagos QR con validación de comprobantes.');
         $this->confirmUninstall = $this->l('¿Está seguro de eliminar el módulo y sus datos?');
     }
 
     public function install()
     {
-        // 1. Directorios Seguros
-        $img_dir = _PS_MODULE_DIR_ . $this->name . '/img/';
-        if (!is_dir($img_dir)) { @mkdir($img_dir, 0755, true); }
-        if (!file_exists($img_dir . 'index.php')) { file_put_contents($img_dir . 'index.php', ''); }
+        // Crear directorios necesarios
+        $dirs = [
+            _PS_MODULE_DIR_ . $this->name . '/img/',
+            _PS_ROOT_DIR_ . '/img/vouchers/',
+            _PS_MODULE_DIR_ . $this->name . '/config/'
+        ];
 
-        $root_voucher = _PS_ROOT_DIR_ . '/img/vouchers/';
-        if (!is_dir($root_voucher)) { @mkdir($root_voucher, 0755, true); }
-        if (!file_exists($root_voucher . 'index.php')) { file_put_contents($root_voucher . 'index.php', ''); }
+        foreach ($dirs as $dir) {
+            if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
+            if (!file_exists($dir . 'index.php')) { file_put_contents($dir . 'index.php', ''); }
+        }
 
-        // 2. Valores por Defecto
+        // Configs por defecto
         if (!Configuration::hasKey('QRPAYMENT_TITLE')) Configuration::updateValue('QRPAYMENT_TITLE', 'Pago con la aplicación QR');
         if (!Configuration::hasKey('QRPAYMENT_DESC')) Configuration::updateValue('QRPAYMENT_DESC', 'Escanea el código QR y adjunta tu comprobante.');
-
-        // 3. Instalación completa
+        
         return parent::install() &&
             $this->installOrderState() &&
             $this->installDb() &&
-            $this->installTab() &&
+            $this->installTab() && 
             $this->registerHook('paymentOptions') &&
             $this->registerHook('header') &&
             $this->registerHook('displayAdminOrderMainBottom');
@@ -57,25 +58,22 @@ class QrPayment extends PaymentModule
 
     public function uninstall()
     {
-        return parent::uninstall() &&
-               $this->uninstallTab() &&
+        return parent::uninstall() && 
+               $this->uninstallTab() && 
                $this->uninstallDb();
     }
 
-    /**
-     * LÓGICA DE CONFIGURACIÓN
-     */
     public function getContent()
     {
         $output = '';
 
-        // 1. Procesar Guardado
         if (Tools::isSubmit('submitQrPaymentConf')) {
             $output .= $this->postProcessConfig();
         }
 
-        // 2. Botón para ir a Gestionar Apps
+        // Obtener enlace al controlador (PrestaShop gestiona la redirección)
         $app_manager_url = $this->context->link->getAdminLink('AdminQrPayment');
+        
         $output .= '
         <div class="panel">
             <div class="panel-heading"><i class="icon-cogs"></i> ' . $this->l('Gestión de Cuentas QR') . '</div>
@@ -89,26 +87,22 @@ class QrPayment extends PaymentModule
             </div>
         </div>';
 
-        // 3. Renderizar Formulario
         return $output . $this->renderForm();
     }
 
     protected function renderForm()
     {
         $helper = new HelperForm();
-
         $helper->show_toolbar = false;
         $helper->table = $this->table;
         $helper->module = $this;
         $helper->default_form_language = $this->context->language->id;
         $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG', 0);
-
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'submitQrPaymentConf';
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
             . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
-
         $helper->tpl_vars = array(
             'fields_value' => $this->getConfigFormValues(),
             'languages' => $this->context->controller->getLanguages(),
@@ -124,12 +118,8 @@ class QrPayment extends PaymentModule
 
         return array(
             'form' => array(
-                'legend' => array(
-                'title' => $this->l('Configuración General'),
-                'icon' => 'icon-cogs',
-                ),
+                'legend' => array('title' => $this->l('Configuración General'), 'icon' => 'icon-cogs'),
                 'input' => array(
-                    // Activar/Desactivar
                     array(
                         'type' => 'switch',
                         'label' => $this->l('Activar método de pago'),
@@ -140,7 +130,6 @@ class QrPayment extends PaymentModule
                             array('id' => 'active_off', 'value' => false, 'label' => $this->l('No')),
                         ),
                     ),
-                    // Título
                     array(
                         'col' => 6,
                         'type' => 'text',
@@ -148,7 +137,6 @@ class QrPayment extends PaymentModule
                         'name' => 'QRPAYMENT_TITLE',
                         'label' => $this->l('Título de pago'),
                     ),
-                    // Descripción
                     array(
                         'col' => 6,
                         'type' => 'textarea',
@@ -156,32 +144,20 @@ class QrPayment extends PaymentModule
                         'name' => 'QRPAYMENT_DESC',
                         'label' => $this->l('Descripción de Checkout'),
                     ),
-                    // Estado Éxito
                     array(
                         'type' => 'select',
                         'label' => $this->l('Estado de pago en caso de éxito'),
                         'name' => 'QRPAYMENT_SUCCESS_STATUS',
-                        'options' => array(
-                            'query' => $order_states,
-                            'id' => 'id_order_state',
-                            'name' => 'name'
-                        ),
+                        'options' => array('query' => $order_states, 'id' => 'id_order_state', 'name' => 'name'),
                     ),
-                    // Estado Error
                     array(
                         'type' => 'select',
                         'label' => $this->l('Estado de pago en caso de fallo'),
                         'name' => 'QRPAYMENT_ERROR_STATUS',
-                        'options' => array(
-                            'query' => $order_states,
-                            'id' => 'id_order_state',
-                            'name' => 'name'
-                        ),
+                        'options' => array('query' => $order_states, 'id' => 'id_order_state', 'name' => 'name'),
                     ),
                 ),
-                'submit' => array(
-                    'title' => $this->l('Guardar'),
-                ),
+                'submit' => array('title' => $this->l('Guardar')),
             ),
         );
     }
@@ -199,20 +175,20 @@ class QrPayment extends PaymentModule
 
     protected function postProcessConfig()
     {
-        // Guardar Textos y Estados (Sin lógica de logo)
         Configuration::updateValue('QRPAYMENT_ACTIVE', (bool)Tools::getValue('QRPAYMENT_ACTIVE'));
         Configuration::updateValue('QRPAYMENT_TITLE', Tools::getValue('QRPAYMENT_TITLE'));
         Configuration::updateValue('QRPAYMENT_DESC', Tools::getValue('QRPAYMENT_DESC'));
         Configuration::updateValue('QRPAYMENT_SUCCESS_STATUS', (int)Tools::getValue('QRPAYMENT_SUCCESS_STATUS'));
         Configuration::updateValue('QRPAYMENT_ERROR_STATUS', (int)Tools::getValue('QRPAYMENT_ERROR_STATUS'));
-
         return $this->displayConfirmation($this->l('Configuración actualizada correctamente.'));
     }
 
-    // --- FUNCIONES DE INSTALACIÓN ---
+    // --- INSTALACIÓN DE TABS UNIVERSAL ---
 
     public function installTab()
     {
+        $this->uninstallTab(); // Limpieza previa
+
         $tab = new Tab();
         $tab->active = 1;
         $tab->class_name = 'AdminQrPayment';
@@ -220,8 +196,14 @@ class QrPayment extends PaymentModule
         foreach (Language::getLanguages(true) as $lang) {
             $tab->name[$lang['id_lang']] = 'Gestión Pagos QR';
         }
-        $tab->id_parent = (int)Tab::getIdFromClassName('AdminParentPayment');
+        $tab->id_parent = (int)Tab::getIdFromClassName('AdminParentPayment'); 
         $tab->module = $this->name;
+
+        // CONDICIÓN MÁGICA: Si es PS 9+, usa ruta moderna. Si es PS 8-, usa legacy.
+        if (version_compare(_PS_VERSION_, '9.0.0', '>=')) {
+            $tab->route_name = 'admin_qrpayment_index'; 
+        }
+
         return $tab->add();
     }
 
@@ -230,7 +212,7 @@ class QrPayment extends PaymentModule
         $id_tab = (int)Tab::getIdFromClassName('AdminQrPayment');
         if ($id_tab) {
             $tab = new Tab($id_tab);
-            return $tab->delete();
+            try { return $tab->delete(); } catch (Exception $e) { return true; }
         }
         return true;
     }
@@ -249,7 +231,6 @@ class QrPayment extends PaymentModule
             `position` int(10) unsigned NOT NULL DEFAULT 0,
             PRIMARY KEY (`id_qrpayment`)
         ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;";
-
         return Db::getInstance()->execute($sql);
     }
 
@@ -282,8 +263,6 @@ class QrPayment extends PaymentModule
         return true;
     }
 
-    // --- HOOKS ---
-
     public function hookHeader()
     {
         $this->context->controller->addCSS($this->_path . 'views/css/qrpayment.css', 'all');
@@ -292,16 +271,13 @@ class QrPayment extends PaymentModule
 
     public function hookPaymentOptions($params)
     {
-        if (!$this->active) return [];
-        if (!Configuration::get('QRPAYMENT_ACTIVE')) return [];
+        if (!$this->active || !Configuration::get('QRPAYMENT_ACTIVE')) return [];
 
         $apps = Db::getInstance()->executeS("SELECT * FROM " . _DB_PREFIX_ . "qrpayment WHERE active = 1 ORDER BY position ASC");
-
         if (empty($apps)) return [];
 
         $locale = $this->context->getCurrentLocale();
         $currency = $this->context->currency;
-
         foreach ($apps as &$app) {
             $app['formatted_max_amount'] = ($app['max_amount'] > 0) ? $locale->formatPrice($app['max_amount'], $currency->iso_code) : '';
         }
@@ -321,13 +297,11 @@ class QrPayment extends PaymentModule
         $newOption->setCallToActionText(Configuration::get('QRPAYMENT_TITLE'))
                       ->setModuleName($this->name)
                       ->setAdditionalInformation($this->fetch('module:qrpayment/views/templates/hook/payment_infos.tpl'));
-
         return [$newOption];
     }
 
     public function hookDisplayAdminOrderMainBottom($params) {
         if(!isset($params['id_order'])) return '';
-
         $file = 'voucher_' . (int)$params['id_order'] . '.jpg';
         $path = _PS_ROOT_DIR_ . '/img/vouchers/' . $file;
         $url = file_exists($path) ? __PS_BASE_URI__ . 'img/vouchers/' . $file : false;

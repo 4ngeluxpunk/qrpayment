@@ -1,14 +1,13 @@
 <?php
 /**
  * Controlador de Administración para QrPayment con Posicionamiento
- * Adaptado de AdminCarriersControllerCore
+ * Compatible con PS 1.7, 8 y 9
  */
 
 require_once _PS_MODULE_DIR_ . 'qrpayment/classes/QrPaymentApp.php';
 
 class AdminQrPaymentController extends ModuleAdminController
 {
-    /** @var string Identificador para la posición (Crucial para Drag & Drop) */
     protected $position_identifier = 'id_qrpayment';
 
     public function __construct()
@@ -19,7 +18,6 @@ class AdminQrPaymentController extends ModuleAdminController
         $this->identifier = 'id_qrpayment';
         $this->lang = false;
         
-        // Orden por defecto por posición
         $this->_defaultOrderBy = 'position';
 
         $this->addRowAction('edit');
@@ -27,6 +25,8 @@ class AdminQrPaymentController extends ModuleAdminController
 
         parent::__construct();
 
+        // --- SOLUCIÓN DEL ERROR: Usamos $this->module->l() en lugar de $this->l() ---
+        
         $this->bulk_actions = [
             'delete' => [
                 'text' => $this->trans('Delete selected', [], 'Admin.Notifications.Info'),
@@ -41,21 +41,15 @@ class AdminQrPaymentController extends ModuleAdminController
                 'align' => 'center',
                 'class' => 'fixed-width-xs',
             ],
-            'icon_path' => [
-                'title' => $this->l('Logo'),
-                'align' => 'center',
-                'callback' => 'displayAppIcon', 
-                'orderby' => false,
-                'search' => false,
-            ],
+            // Columna Logo eliminada para evitar errores y limpiar diseño
             'name' => [
-                'title' => $this->l('Nombre App'),
+                'title' => $this->module->l('Nombre App'), // CORREGIDO
             ],
             'phone' => [
-                'title' => $this->l('Teléfono / Cuenta'),
+                'title' => $this->module->l('Teléfono / Cuenta'), // CORREGIDO
             ],
             'max_amount' => [
-                'title' => $this->l('Monto Máximo'),
+                'title' => $this->module->l('Monto Máximo'), // CORREGIDO
                 'type' => 'price',
                 'currency' => true,
             ],
@@ -67,32 +61,24 @@ class AdminQrPaymentController extends ModuleAdminController
                 'class' => 'fixed-width-sm',
                 'orderby' => false,
             ],
-            // Columna de Posición (Habilita el Drag & Drop en la vista)
             'position' => [
                 'title' => $this->trans('Position', [], 'Admin.Global'),
                 'filter_key' => 'a!position',
                 'align' => 'center',
                 'class' => 'fixed-width-sm',
-                'position' => 'position', // Esto activa el script de ordenamiento
+                'position' => 'position',
             ],
         ];
     }
 
-    public function displayAppIcon($icon_path, $row)
-    {
-        if (!$icon_path) return '';
-        $img_url = $this->module->getPathUri() . 'img/' . $icon_path;
-        return '<img src="' . $img_url . '" style="max-width:40px; max-height:40px; object-fit:contain;" class="img-thumbnail" />';
-    }
-
     public function initPageHeaderToolbar()
     {
-        $this->page_header_toolbar_title = $this->l('Métodos de Pago QR');
+        $this->page_header_toolbar_title = $this->module->l('Métodos de Pago QR'); // CORREGIDO
         
         if ($this->display != 'add' && $this->display != 'edit') {
             $this->page_header_toolbar_btn['new_qrapp'] = [
                 'href' => self::$currentIndex . '&addqrpayment&token=' . $this->token,
-                'desc' => $this->l('Añadir nueva App'),
+                'desc' => $this->module->l('Añadir nueva App'), // CORREGIDO
                 'icon' => 'process-icon-new',
             ];
         }
@@ -108,44 +94,44 @@ class AdminQrPaymentController extends ModuleAdminController
 
         $this->fields_form = [
             'legend' => [
-                'title' => $this->l('Información de la App QR'),
+                'title' => $this->module->l('Información de la App QR'), // CORREGIDO
                 'icon' => 'icon-money',
             ],
             'input' => [
                 [
                     'type' => 'text',
-                    'label' => $this->l('Nombre de la App'),
+                    'label' => $this->module->l('Nombre de la App'), // CORREGIDO
                     'name' => 'name',
                     'required' => true,
-                    'hint' => $this->l('Ej: Yape, Plin, PayPal'),
+                    'hint' => $this->module->l('Ej: Yape, Plin, PayPal'),
                 ],
                 [
                     'type' => 'text',
-                    'label' => $this->l('Teléfono o Número de Cuenta'),
+                    'label' => $this->module->l('Teléfono o Número de Cuenta'), // CORREGIDO
                     'name' => 'phone',
                 ],
                 [
                     'type' => 'text',
-                    'label' => $this->l('Email (Opcional)'),
+                    'label' => $this->module->l('Email (Opcional)'), // CORREGIDO
                     'name' => 'email',
                 ],
                 [
                     'type' => 'file',
-                    'label' => $this->l('Icono / Logo'),
+                    'label' => $this->module->l('Icono Pequeño'), // CORREGIDO
                     'name' => 'icon_path',
                     'display_image' => true,
                     'image' => $icon_url ? '<img src="'.$icon_url.'" style="max-width: 80px;"/>' : false,
                 ],
                 [
                     'type' => 'file',
-                    'label' => $this->l('Código QR (Imagen)'),
+                    'label' => $this->module->l('Código QR (Imagen)'), // CORREGIDO
                     'name' => 'image_path',
                     'display_image' => true,
                     'image' => $qr_url ? '<img src="'.$qr_url.'" style="max-width: 150px;"/>' : false,
                 ],
                 [
                     'type' => 'text',
-                    'label' => $this->l('Monto Máximo'),
+                    'label' => $this->module->l('Monto Máximo'), // CORREGIDO
                     'name' => 'max_amount',
                     'prefix' => $this->context->currency->sign,
                 ],
@@ -159,7 +145,6 @@ class AdminQrPaymentController extends ModuleAdminController
                         ['id' => 'active_off', 'value' => 0, 'label' => $this->trans('No', [], 'Admin.Global')],
                     ],
                 ],
-                // El campo posición es interno, no se muestra en el formulario generalmente
             ],
             'submit' => [
                 'title' => $this->trans('Save', [], 'Admin.Actions'),
@@ -190,10 +175,6 @@ class AdminQrPaymentController extends ModuleAdminController
         }
     }
 
-    /**
-     * Proceso AJAX para actualizar posiciones (Drag & Drop)
-     * Adaptado de AdminCarriersController::ajaxProcessUpdatePositions
-     */
     public function ajaxProcessUpdatePositions()
     {
         $way = (bool) (Tools::getValue('way'));

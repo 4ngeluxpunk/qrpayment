@@ -1,0 +1,8 @@
+admin_qrpayment_index:
+    path: /improve/payment/qrpayment/apps
+    methods: [GET, POST]
+    defaults:
+      _controller: 'PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController::legacyAction'
+      controller_name: 'AdminQrPayment'
+      _legacy_controller: 'AdminQrPayment'
+      _module: 'qrpayment'
