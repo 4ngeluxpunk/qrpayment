@@ -1,7 +1,7 @@
 <?php
 /**
  * Clase ObjectModel para la gestión de Apps de Pago QR
- * Adaptado de CarrierCore para QrPayment con soporte de Posición
+ * Segurizada contra SQL Injection
  */
 class QrPaymentApp extends ObjectModel
 {
@@ -13,13 +13,8 @@ class QrPaymentApp extends ObjectModel
     public $image_path;
     public $icon_path;
     public $active = true;
-    
-    /** @var int Posición para ordenar */
     public $position;
 
-    /**
-     * Definición del Modelo de Datos
-     */
     public static $definition = [
         'table' => 'qrpayment',
         'primary' => 'id_qrpayment',
@@ -32,15 +27,10 @@ class QrPaymentApp extends ObjectModel
             'image_path' => ['type' => self::TYPE_STRING, 'size' => 255],
             'icon_path' => ['type' => self::TYPE_STRING, 'size' => 255],
             'active' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
-            // Campo posición añadido
             'position' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
         ],
     ];
 
-    /**
-     * Añade la App calculando la posición automáticamente (al final de la lista)
-     * Adaptado de Carrier::add()
-     */
     public function add($autoDate = true, $nullValues = false)
     {
         if ($this->position <= 0) {
@@ -50,21 +40,16 @@ class QrPaymentApp extends ObjectModel
         if (!parent::add($autoDate, $nullValues) || !Validate::isLoadedObject($this)) {
             return false;
         }
-
         return true;
     }
 
-    /**
-     * Elimina la App y reordena las posiciones restantes
-     * Adaptado de Carrier::delete()
-     */
     public function delete()
     {
-        // Eliminación de imágenes físicas
-        if ($this->image_path && file_exists(_PS_MODULE_DIR_ . 'qrpayment/img/' . $this->image_path)) {
+        // Validación de rutas para evitar borrado arbitrario
+        if ($this->image_path && strpos($this->image_path, '..') === false && file_exists(_PS_MODULE_DIR_ . 'qrpayment/img/' . $this->image_path)) {
             @unlink(_PS_MODULE_DIR_ . 'qrpayment/img/' . $this->image_path);
         }
-        if ($this->icon_path && file_exists(_PS_MODULE_DIR_ . 'qrpayment/img/' . $this->icon_path)) {
+        if ($this->icon_path && strpos($this->icon_path, '..') === false && file_exists(_PS_MODULE_DIR_ . 'qrpayment/img/' . $this->icon_path)) {
             @unlink(_PS_MODULE_DIR_ . 'qrpayment/img/' . $this->icon_path);
         }
 
@@ -72,18 +57,16 @@ class QrPaymentApp extends ObjectModel
             return false;
         }
 
-        // Reordenar posiciones después de borrar
         QrPaymentApp::cleanPositions();
-
         return true;
     }
 
-    /**
-     * Actualiza la posición de una fila (para Drag & Drop)
-     * Adaptado de Carrier::updatePosition()
-     */
     public function updatePosition($way, $position)
     {
+        // Sanitización estricta (SQL Injection Prevention)
+        $id_qrpayment = (int)$this->id;
+        $position = (int)$position;
+
         if (!$res = Db::getInstance()->executeS(
             'SELECT `id_qrpayment`, `position`
             FROM `' . _DB_PREFIX_ . 'qrpayment`
@@ -93,7 +76,7 @@ class QrPaymentApp extends ObjectModel
         }
 
         foreach ($res as $app) {
-            if ((int) $app['id_qrpayment'] == (int) $this->id) {
+            if ((int) $app['id_qrpayment'] == $id_qrpayment) {
                 $moved_app = $app;
             }
         }
@@ -102,32 +85,27 @@ class QrPaymentApp extends ObjectModel
             return false;
         }
 
-        // Actualizamos las posiciones intermedias para hacer hueco
+        // Consultas parametrizadas manuales (usando casts estrictos)
+        $moved_pos = (int)$moved_app['position'];
+
         return Db::getInstance()->execute('
             UPDATE `' . _DB_PREFIX_ . 'qrpayment`
             SET `position`= `position` ' . ($way ? '- 1' : '+ 1') . '
             WHERE `position`
             ' . ($way
-                ? '> ' . (int) $moved_app['position'] . ' AND `position` <= ' . (int) $position
-                : '< ' . (int) $moved_app['position'] . ' AND `position` >= ' . (int) $position
+                ? '> ' . $moved_pos . ' AND `position` <= ' . $position
+                : '< ' . $moved_pos . ' AND `position` >= ' . $position
             ))
         && Db::getInstance()->execute('
             UPDATE `' . _DB_PREFIX_ . 'qrpayment`
-            SET `position` = ' . (int) $position . '
-            WHERE `id_qrpayment` = ' . (int) $moved_app['id_qrpayment']);
+            SET `position` = ' . $position . '
+            WHERE `id_qrpayment` = ' . $moved_app['id_qrpayment']);
     }
 
-    /**
-     * Reordena todas las posiciones desde 0
-     * Adaptado de Carrier::cleanPositions()
-     */
     public static function cleanPositions()
     {
         $return = true;
-
-        $sql = 'SELECT `id_qrpayment`
-                FROM `' . _DB_PREFIX_ . 'qrpayment`
-                ORDER BY `position` ASC';
+        $sql = 'SELECT `id_qrpayment` FROM `' . _DB_PREFIX_ . 'qrpayment` ORDER BY `position` ASC';
         $result = Db::getInstance()->executeS($sql);
 
         $i = 0;
@@ -137,20 +115,13 @@ class QrPaymentApp extends ObjectModel
                 SET `position` = ' . (int) $i++ . '
                 WHERE `id_qrpayment` = ' . (int) $value['id_qrpayment']);
         }
-
         return $return;
     }
 
-    /**
-     * Obtiene la posición más alta actual
-     * Adaptado de Carrier::getHigherPosition()
-     */
     public static function getHigherPosition()
     {
-        $sql = 'SELECT MAX(`position`)
-                FROM `' . _DB_PREFIX_ . 'qrpayment`';
+        $sql = 'SELECT MAX(`position`) FROM `' . _DB_PREFIX_ . 'qrpayment`';
         $position = Db::getInstance()->getValue($sql);
-
-        return (is_numeric($position)) ? $position : -1;
+        return (is_numeric($position)) ? (int)$position : -1;
     }
 }

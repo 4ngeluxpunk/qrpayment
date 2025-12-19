@@ -24,20 +24,19 @@
 <div id="qr-modal-overlay" class="qr-modal-overlay" style="display:none;">
     <div class="qr-modal">
         <div class="qr-modal-header">
-            <!-- Título dinámico -->
             <h3 id="qr-modal-title"></h3>
             <button type="button" class="close-modal-btn" onclick="closeQrModal()"><i class="material-icons">close</i></button>
         </div>
 
         <div class="qr-modal-body">
-            {* ------------------------------------------- *}
-            {* Paso 1: Información y Código QR (Diseño mejorado) *}
-            {* ------------------------------------------- *}
+            {* --- PASO 1 (INFO) --- *}
             <div id="qr-step-info">
-                <p class="qr-modern-label">{l s='Copiar Numero de teléfono' mod='qrpayment'}</p>
+                <p class="qr-modern-label">{l s='Copiar Número de teléfono' mod='qrpayment'}</p>
 
-                <div id="qr-modal-phone" class="qr-phone-box" onclick="copyPhoneNumber()"></div>
-                <div id="qr-copy-feedback" class="qr-copy-feedback">{l s='¡Copiado al portapapeles!' mod='qrpayment'}</div>
+                <div class="qr-phone-wrapper">
+                    <div id="qr-modal-phone" class="qr-phone-box" onclick="copyPhoneNumber()"></div>
+                    <div id="qr-copy-feedback" class="qr-copy-feedback">{l s='¡Copiado!' mod='qrpayment'}</div>
+                </div>
 
                 <div class="qr-big-img-container">
                     <img id="qr-modal-image" src="" alt="QR Image" class="qr-big-img" />
@@ -51,15 +50,15 @@
                     <div class="qr-amount-display">
                         {Context::getContext()->currentLocale->formatPrice(Context::getContext()->cart->getOrderTotal(true, Cart::BOTH), Context::getContext()->currency->iso_code)}
                     </div>
-                    <br>
+
+                    {* --- TEXTO SOLICITADO AQUI --- *}
                     <p class="qr-text-label">
                         {l s='Escanee el código QR o agregue nuestro número de teléfono celular, cuando realice el pago, haga clic en el botón Continuar' mod='qrpayment'}
                     </p>
                 </div>
 
-                {* Monto Máximo (Opcional) *}
                 <p id="qr-modal-max-amount-container" style="display:none;" class="qr-max-amount-container">
-                    <i class="material-icons">warning</i>
+                    <i class="material-icons" style="font-size: 14px; vertical-align: middle;">warning</i>
                     {l s='Monto Máximo de Transferencia:' mod='qrpayment'} <span id="qr-modal-max-amount-value"></span>
                 </p>
 
@@ -68,9 +67,7 @@
                 </button>
             </div>
 
-            {* ------------------------------------------- *}
-            {* Paso 2: Subir Voucher (Diseño de la Imagen 2) *}
-            {* ------------------------------------------- *}
+            {* --- PASO 2 (UPLOAD) --- *}
             <div id="qr-step-upload" style="display:none;">
                 <h4 class="qr-upload-header">{l s='Adjuntar Comprobante' mod='qrpayment'}</h4>
                 <p class="qr-upload-subheader">{l s='Sube una foto o captura de la transacción exitosa.' mod='qrpayment'}</p>
@@ -79,11 +76,13 @@
                     <input type="hidden" name="qr_app_id" id="qr-modal-app-id-input">
                     <input type="hidden" name="submitQrPayment" value="1">
 
-                    <label class="qr-upload-area">
+                    <label class="qr-upload-area" id="qr-drop-zone">
                         <i class="material-icons">cloud_upload</i>
-                        <span>{l s='CLIC AQUÍ para seleccionar el archivo (JPG, PNG o PDF)' mod='qrpayment'}</span>
-                        <input type="file" name="payment_voucher" required accept="image/*" onchange="previewFile(this)">
+                        <span>{l s='CLIC AQUÍ para seleccionar el archivo (JPG, PNG)' mod='qrpayment'}</span>
+                        <input type="file" id="qr_payment_voucher" name="payment_voucher" accept=".jpg, .jpeg, .png, .gif" onchange="previewFile(this)">
                     </label>
+
+                    <div id="qr-file-error"></div>
                     <div id="file-name-preview" class="small text-center"></div>
 
                     <div class="qr-modal-actions">

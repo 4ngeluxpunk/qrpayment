@@ -1,4 +1,4 @@
-/* --- Checkout --- */
+/* --- Checkout: Lista de Apps --- */
 .qr-app-list { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 15px; }
 .qr-app-item {
     border: 2px solid #e5e5e5; border-radius: 8px; padding: 10px; cursor: pointer;
@@ -17,269 +17,163 @@
 .qr-desc { margin-bottom: 10px; font-size: 1.1em; color: #555; }
 
 
-/* --- QR MODAL OVERLAY (Contenedor principal del popup) --- */
+/* ====================================================== */
+/* --- MODAL FLUIDO (SIN SCROLL) --- */
+/* ====================================================== */
+
+/* Overlay */
 .qr-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.65);
+    display: flex; justify-content: center; align-items: center; z-index: 99999;
+    backdrop-filter: blur(3px);
+    padding: 10px;
 }
 
-/* Contenedor del Modal */
+/* Tarjeta Principal */
 .qr-modal {
     background: #ffffff;
-    border-radius: 16px; /* Redondear bordes del modal */
-    width: 100%;
-    max-width: 450px; /* ANCHO AUMENTADO para que no se vea tan delgado */
-    max-height: 100vh; /* ALTO MÁXIMO (90% de la pantalla) para dejar espacio arriba y abajo */
-    animation: fadeIn 0.3s ease-out;
+    border-radius: 20px;
     overflow: hidden;
-    display: flex;
-    flex-direction: column; /* Permite separar header y body correctamente */
-    position: relative;
-}
-
-/* Header del Modal */
-.qr-modal-header {
-    padding: 20px 25px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #f7f7f7; /* Fondo sutil para el header */
-}
-
-/* Título del Modal */
-.qr-modal-header h3 {
-    margin: 0;
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #333;
-}
-
-/* Botón de Cerrar */
-.qr-modal-header .close-modal-btn {
-    background: none;
+    width: 100%;
+    max-width: 450px; /* Ancho estándar equilibrado */
+    max-height: 98vh;
+    display: flex; flex-direction: column; position: relative;
+    /* box-shadow ELIMINADO según solicitud */
     border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #888;
-    transition: color 0.2s;
-}
-.qr-modal-header .close-modal-btn:hover {
-    color: #333;
 }
 
-/* Body del Modal (General) */
+/* --- Header --- */
+.qr-modal-header {
+    padding: 15px 25px; /* Compacto */
+    background-color: #fff;
+    border-bottom: 1px solid #f2f2f2;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+}
+.qr-modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 800; color: #333; text-transform: uppercase; letter-spacing: 0.5px; }
+.qr-modal-header .close-modal-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #bbb; padding: 0; line-height: 1; transition: color 0.2s; }
+.qr-modal-header .close-modal-btn:hover { color: #333; }
+
+/* --- Body --- */
 .qr-modal-body {
-    padding: 30px; /* Más padding para aire */
+    padding: 15px 25px; /* Reducido para evitar scroll */
     text-align: center;
+    overflow-y: auto;
 }
 
-/* ====================================================== */
-/* --- POPUP 2: ESTILOS DE PASO 1 (INFO) y PASO 2 (UPLOAD) --- */
-/* ====================================================== */
+/* --- Elementos Paso 1 --- */
 
-/* Paso 1: Información de Pago */
+.qr-modern-label { font-weight: 700; color: #555; margin-bottom: 5px; display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
 
-/* Etiqueta / Texto */
-.qr-modern-label {
-    font-weight: 600;
-    color: #555;
-    margin-bottom: 5px;
-    display: block;
-    font-size: 0.95rem;
-}
-
-/* Caja del Teléfono / CBU (Lo que se copia) */
-.qr-phone-box { /* Mantenemos qr-phone-box por compatibilidad pero mejoramos el estilo */
-    background: #e9f7fd; /* Azul claro para destacar */
-    border: 1px solid #2fb5d2;
-    border-radius: 8px;
-    padding: 10px;
+/* Teléfono */
+.qr-phone-box {
+    background: #f4fcff; border: 1px solid #2fb5d2; border-radius: 10px;
+    padding: 10px; /* Menos padding vertical */
     font-size: 1.4em;
-    font-weight: 700;
-    margin: 10px 0 5px 0;
-    color: #00567a;
-    letter-spacing: 0.5px;
-    cursor: pointer;
-    position: relative;
-    transition: background 0.2s;
+    font-weight: 700; margin: 5px 0 15px 0; color: #007a99;
+    cursor: pointer; position: relative; transition: all 0.2s; user-select: none;
 }
-.qr-phone-box:hover {
-    background: #d4eff9;
-}
-/* Feedback de copiado */
+.qr-phone-box:hover { background: #e0f7ff; transform: scale(1.02); }
+
+/* Feedback */
+.qr-phone-wrapper { position: relative; margin-bottom: 5px; flex-shrink: 0; }
 .qr-copy-feedback {
-    display: none; /* Inicialmente oculto, lo muestra JS */
-    color: #28a745;
-    font-weight: bold;
-    font-size: 0.85rem;
-    margin-bottom: 20px;
-    height: 1.2em;
+    display: none; position: absolute; bottom: -22px; left: 0; right: 0;
+    color: #28a745; font-weight: bold; font-size: 0.8rem; pointer-events: none;
 }
 
-/* Imagen QR (Rediseñada) */
+/* Imagen QR */
 .qr-big-img-container {
-    text-align: center;
-    padding: 15px;
-    border: 1px solid #f0f0f0;
-    border-radius: 8px;
-    background: #fff;
+    padding: 6px; border: 1px solid #eee; border-radius: 14px; background: #fff;
+    margin-bottom: 15px; display: inline-block;
+    /* Sombra ligera para el QR solamente (opcional, para que destaque sin el shadow del modal) */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 .qr-big-img {
-    max-width: 180px; /* QR más compacto */
-    margin: 0 auto;
-    display: block;
-    border: none; /* Quitamos el borde redundante */
-    padding: 0;
+    max-width: 150px; /* Tamaño equilibrado para Laptop sin causar scroll */
+    height: auto; display: block; object-fit: contain;
 }
 
-/* Monto a Pagar */
+/* Monto y Texto */
 .qr-amount-wrapper {
-    background: #f7f7f7;
-    padding: 15px;
-    border-radius: 8px;
+    background: #f9f9f9; padding: 12px; border-radius: 12px; margin-bottom: 15px;
 }
-.qr-amount-label {
-    font-size: 0.9rem;
-    color: #888;
-    margin-bottom: 5px;
-}
+.qr-amount-label { font-size: 0.75rem; color: #888; margin-bottom: 5px; text-transform: uppercase; font-weight: 600; }
+.qr-amount-display { font-size: 2em; font-weight: 800; color: #2fb5d2; line-height: 1; margin-bottom: 8px; }
 
 .qr-text-label {
-    font-size: 0.6rem;
-    color: #888;
-    margin-bottom: 5px;
+    display: block; font-size: 0.75rem; color: #777; margin-top: 8px;
+    line-height: 1.3; padding-top: 8px; border-top: 1px dashed #e0e0e0;
 }
 
-.qr-amount-display {
-    font-size: 2.2em;
-    font-weight: 800;
-    color: #2fb5d2;
-    margin: 5px 0 0 0;
-}
-
-/* Límite Máximo */
 .qr-max-amount-container {
-    margin-top: 10px;
-    font-size: 0.85rem;
-    color: #dc3545;
-    background: #fff5f5;
-    padding: 5px 10px;
-    border-radius: 5px;
-    display: inline-block !important; /* Asegurar que se muestre como bloque cuando sea necesario */
-}
-.qr-max-amount-container i {
-    font-size: 0.9em;
-    vertical-align: middle;
+    margin-top: 0; margin-bottom: 12px; font-size: 0.75rem; color: #dc3545; background: #fff5f5;
+    padding: 5px 10px; border-radius: 6px; display: inline-block !important; font-weight: 600;
 }
 
 /* Botón Continuar */
 .btn-continue-custom {
-    background-color: #2fb5d2;
-    border-color: #2fb5d2;
-    color: white;
-    font-weight: 700;
-    font-size: 1.1em;
-    padding: 15px;
-    margin-top: 15px;
-    width: 100%;
-    border-radius: 8px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 4px 10px rgba(47, 181, 210, 0.3);
-    transition: background-color 0.2s, transform 0.2s;
+    background-color: #2fb5d2; border: none; color: white; font-weight: 700; font-size: 1rem;
+    padding: 12px; /* Más delgado para ahorrar espacio */
+    width: 100%; border-radius: 50px; text-transform: uppercase; letter-spacing: 1px;
+    box-shadow: 0 5px 15px rgba(47, 181, 210, 0.3); transition: all 0.2s; cursor: pointer;
 }
-.btn-continue-custom:hover {
-    background-color: #2592a9;
-    transform: translateY(-1px);
+.btn-continue-custom:hover { background-color: #2592a9; transform: translateY(-2px); }
+
+/* --- Elementos Paso 2 (Upload) --- */
+.qr-upload-header { font-size: 1.2rem; font-weight: 700; color: #333; margin-bottom: 5px; }
+.qr-upload-subheader { font-size: 0.9rem; color: #777; margin-bottom: 15px; }
+.qr-upload-area {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 150px; border: 2px dashed #ccc; border-radius: 12px; background: #fafafa;
+    cursor: pointer; transition: all 0.3s ease; padding: 10px;
+}
+.qr-upload-area:hover { border-color: #2fb5d2; background: #f0fbff; }
+.qr-upload-area i.material-icons { font-size: 45px; color: #bbb; margin-bottom: 8px; }
+.qr-upload-area span { font-weight: 600; color: #666; font-size: 0.9rem; margin-top: 5px; text-align: center; }
+.qr-upload-area input[type="file"] { display: none; }
+#file-name-preview { margin-top: 10px; color: #2fb5d2; font-weight: 600; font-size: 0.9rem; }
+
+#qr-file-error {
+    background-color: #fff2f4; color: #d63346; border: 1px solid #ffccd2; border-radius: 6px;
+    padding: 8px; margin-top: 10px; font-size: 0.85rem; font-weight: 700; text-align: center;
+    display: none; animation: shake 0.5s;
+}
+@keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
+
+.qr-modal-actions { display: flex; justify-content: space-between; gap: 15px; margin-top: 20px; }
+.qr-modal-actions .btn { padding: 10px; font-weight: 700; border-radius: 8px; font-size: 0.9rem; }
+.qr-modal-actions .btn-secondary { flex: 1; background-color: #f1f1f1; color: #666; border: 1px solid #ddd; }
+.qr-modal-actions .btn-success { flex: 2; background-color: #28a745; border: none; color: white; text-transform: uppercase; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); }
+
+
+/* ====================================================== */
+/* --- MEDIA QUERIES --- */
+/* ====================================================== */
+
+/* MÓVILES */
+@media (max-width: 576px) {
+    .qr-modal { max-width: 95%; border-radius: 16px; }
+    .qr-modal-body { padding: 15px; }
+    .qr-phone-box { font-size: 1.3em; margin-bottom: 10px; }
+    .qr-big-img { max-width: 130px; }
+    .btn-continue-custom { padding: 12px; font-size: 1rem; }
 }
 
-/* Paso 2: Subir Voucher (Diseño de la Imagen 2) */
+/* PANTALLAS CORTAS (Evitar scroll extremo) */
+@media (max-height: 600px) {
+    .qr-modal-header { padding: 8px 15px; }
+    .qr-modal-body { padding: 8px 15px; }
 
-.qr-upload-header {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #333;
-    margin-bottom: 5px;
-}
-.qr-upload-subheader {
-    font-size: 0.9rem;
-    color: #777;
-    margin-bottom: 25px;
-}
+    .qr-modern-label { margin-bottom: 2px; font-size: 0.7rem; }
+    .qr-phone-box { padding: 6px; margin: 3px 0 8px 0; font-size: 1.1em; }
+    .qr-big-img-container { padding: 4px; margin-bottom: 8px; }
+    .qr-big-img { max-width: 90px; }
 
-.qr-upload-area { /* Mantenemos qr-upload-area pero con nuevo diseño */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 180px; /* Área grande para arrastrar/clic */
-    border: 3px dashed #ccc;
-    border-radius: 12px;
-    background: #fdfdfd;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    padding: 20px;
-}
-.qr-upload-area:hover {
-    border-color: #2fb5d2;
-    background: #f4fcff;
-}
-.qr-upload-area i.material-icons {
-    font-size: 48px;
-    color: #bbb;
-    margin-bottom: 10px;
-}
-.qr-upload-area span {
-    font-weight: 600;
-    color: #555;
-    margin-top: 5px;
-}
-.qr-upload-area input[type="file"] {
-    display: none;
-}
+    .qr-amount-wrapper { padding: 6px; margin-bottom: 6px; }
+    .qr-amount-display { font-size: 1.4em; margin-bottom: 2px; }
+    .qr-text-label { font-size: 0.65rem; }
 
-/* Previsualización del Nombre del Archivo */
-#file-name-preview {
-    margin-top: 15px;
-    color: #2fb5d2;
-    font-weight: 600;
-}
-
-/* Acciones (Botones Atrás y Finalizar) */
-.qr-modal-actions {
-    display: flex;
-    justify-content: space-between;
-    gap: 15px;
-    margin-top: 30px;
-}
-.qr-modal-actions .btn {
-    padding: 12px 20px;
-    font-weight: 700;
-    border-radius: 8px;
-}
-.qr-modal-actions .btn-secondary {
-    flex: 1;
-    background-color: #eee;
-    color: #555;
-    border: 1px solid #ccc;
-}
-.qr-modal-actions .btn-success {
-    flex: 2; /* Finalizar es más prominente */
-    background-color: #28a745;
-    border: none;
-    color: white;
-    text-transform: uppercase;
-    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
-}
-.qr-modal-actions .btn-success:hover {
-    background-color: #1e873f;
+    .btn-continue-custom { padding: 8px; font-size: 0.9rem; }
 }
