@@ -29,7 +29,6 @@
         </div>
 
         <div class="qr-modal-body">
-            {* --- PASO 1 (INFO) --- *}
             <div id="qr-step-info">
                 <p class="qr-modern-label">{l s='Copiar Número de teléfono' mod='qrpayment'}</p>
 
@@ -51,7 +50,6 @@
                         {Context::getContext()->currentLocale->formatPrice(Context::getContext()->cart->getOrderTotal(true, Cart::BOTH), Context::getContext()->currency->iso_code)}
                     </div>
 
-                    {* --- TEXTO SOLICITADO AQUI --- *}
                     <p class="qr-text-label">
                         {l s='Escanee el código QR o agregue nuestro número de teléfono celular, cuando realice el pago, haga clic en el botón Continuar' mod='qrpayment'}
                     </p>
@@ -67,7 +65,6 @@
                 </button>
             </div>
 
-            {* --- PASO 2 (UPLOAD) --- *}
             <div id="qr-step-upload" style="display:none;">
                 <h4 class="qr-upload-header">{l s='Adjuntar Comprobante' mod='qrpayment'}</h4>
                 <p class="qr-upload-subheader">{l s='Sube una foto o captura de la transacción exitosa.' mod='qrpayment'}</p>

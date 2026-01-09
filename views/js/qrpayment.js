@@ -1,14 +1,9 @@
-/**
- * Lógica QR Payment - Validación Cliente (Efecto Ajax)
- */
-
 document.addEventListener("DOMContentLoaded", function() {
     var modal = document.getElementById('qr-modal-overlay');
     if (modal) {
         document.body.appendChild(modal);
     }
 
-    // Listener para abrir el modal desde el checkout
     var orderButton = document.getElementById('payment-confirmation') ? document.getElementById('payment-confirmation').querySelector('button') : null;
 
     if(orderButton) {
@@ -34,7 +29,6 @@ document.addEventListener("DOMContentLoaded", function() {
         }, true);
     }
 
-    // --- VALIDACIÓN ESTRICTA DEL FORMULARIO (Efecto AJAX) ---
     var voucherForm = document.getElementById('qr-voucher-form');
     if (voucherForm) {
         voucherForm.addEventListener('submit', function(e) {
@@ -43,40 +37,35 @@ document.addEventListener("DOMContentLoaded", function() {
             var errorBox = document.getElementById('qr-file-error');
             var fileNamePreview = document.getElementById('file-name-preview');
 
-            // 1. Limpiar errores previos
             if(errorBox) {
                 errorBox.style.display = 'none';
                 errorBox.innerText = '';
             }
 
-            // 2. Validar Existencia del Archivo
             if (!fileInput.files || fileInput.files.length === 0) {
                 e.preventDefault();
-                e.stopImmediatePropagation(); // Detiene cualquier otro script
+                e.stopImmediatePropagation();
 
                 if(errorBox) {
                     errorBox.innerText = 'Falta Captura de Pago';
                     errorBox.style.display = 'block';
                 } else {
-                    alert('Falta Captura de Pago'); // Fallback por si falla el CSS/HTML
+                    alert('Falta Captura de Pago');
                 }
                 return false;
             }
 
-            // 3. Validar Extensión de Imagen
             var file = fileInput.files[0];
             var allowedExtensions = /(\.jpg|\.jpeg|\.png|\.gif)$/i;
 
             if (!allowedExtensions.exec(file.name)) {
                 e.preventDefault();
-                e.stopImmediatePropagation(); // Detiene envío al servidor
+                e.stopImmediatePropagation();
 
-                // Limpiar input visualmente
                 fileInput.value = '';
                 if(fileNamePreview) fileNamePreview.innerText = '';
 
                 if(errorBox) {
-                    // Mensaje solicitado exacto
                     errorBox.innerText = 'Formato de archivo no permitido. Solo se aceptan imágenes (JPG, PNG, GIF).';
                     errorBox.style.display = 'block';
                 } else {
@@ -84,8 +73,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
                 return false;
             }
-
-            // Si todo está bien, dejamos que el formulario se envíe normalmente al servidor
         });
     }
 });
@@ -110,14 +97,12 @@ function openQrModal() {
     var appName = selectedItem.getAttribute('data-name');
     var maxAmount = selectedItem.getAttribute('data-max-amount');
 
-    // Llenar datos
     document.getElementById('qr-modal-title').innerText = appName;
     document.getElementById('qr-modal-phone').innerText = selectedItem.getAttribute('data-phone');
     document.getElementById('qr-modal-image').src = selectedItem.getAttribute('data-image');
     document.getElementById('qr-modal-app-id-input').value = selectedItem.getAttribute('data-id');
     document.getElementById('qr-modal-app-name-label').innerText = appName;
 
-    // Monto Máximo
     var maxAmountContainer = document.getElementById('qr-modal-max-amount-container');
     var maxAmountValue = document.getElementById('qr-modal-max-amount-value');
 
@@ -128,7 +113,6 @@ function openQrModal() {
         maxAmountContainer.style.display = 'none';
     }
 
-    // Resetear formulario (UI)
     var errorBox = document.getElementById('qr-file-error');
     if(errorBox) errorBox.style.display = 'none';
 
@@ -160,7 +144,6 @@ function previewFile(input) {
     var fileNamePreview = document.getElementById('file-name-preview');
     var errorBox = document.getElementById('qr-file-error');
 
-    // Al seleccionar archivo, ocultamos el error "Falta captura"
     if(errorBox) errorBox.style.display = 'none';
 
     if(input.files && input.files[0]) {

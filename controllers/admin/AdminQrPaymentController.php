@@ -1,8 +1,4 @@
 <?php
-/**
- * Controlador de Administración para QrPayment con Posicionamiento
- * Compatible con PS 1.7, 8 y 9
- */
 
 require_once _PS_MODULE_DIR_ . 'qrpayment/classes/QrPaymentApp.php';
 
@@ -25,8 +21,6 @@ class AdminQrPaymentController extends ModuleAdminController
 
         parent::__construct();
 
-        // --- SOLUCIÓN DEL ERROR: Usamos $this->module->l() en lugar de $this->l() ---
-        
         $this->bulk_actions = [
             'delete' => [
                 'text' => $this->trans('Delete selected', [], 'Admin.Notifications.Info'),
@@ -41,15 +35,14 @@ class AdminQrPaymentController extends ModuleAdminController
                 'align' => 'center',
                 'class' => 'fixed-width-xs',
             ],
-            // Columna Logo eliminada para evitar errores y limpiar diseño
             'name' => [
-                'title' => $this->module->l('Nombre App'), // CORREGIDO
+                'title' => $this->module->l('Nombre App'),
             ],
             'phone' => [
-                'title' => $this->module->l('Teléfono / Cuenta'), // CORREGIDO
+                'title' => $this->module->l('Teléfono / Cuenta'),
             ],
             'max_amount' => [
-                'title' => $this->module->l('Monto Máximo'), // CORREGIDO
+                'title' => $this->module->l('Monto Máximo'),
                 'type' => 'price',
                 'currency' => true,
             ],
@@ -73,12 +66,12 @@ class AdminQrPaymentController extends ModuleAdminController
 
     public function initPageHeaderToolbar()
     {
-        $this->page_header_toolbar_title = $this->module->l('Métodos de Pago QR'); // CORREGIDO
+        $this->page_header_toolbar_title = $this->module->l('Métodos de Pago QR');
         
         if ($this->display != 'add' && $this->display != 'edit') {
             $this->page_header_toolbar_btn['new_qrapp'] = [
                 'href' => self::$currentIndex . '&addqrpayment&token=' . $this->token,
-                'desc' => $this->module->l('Añadir nueva App'), // CORREGIDO
+                'desc' => $this->module->l('Añadir nueva App'),
                 'icon' => 'process-icon-new',
             ];
         }
@@ -94,44 +87,44 @@ class AdminQrPaymentController extends ModuleAdminController
 
         $this->fields_form = [
             'legend' => [
-                'title' => $this->module->l('Información de la App QR'), // CORREGIDO
+                'title' => $this->module->l('Información de la App QR'),
                 'icon' => 'icon-money',
             ],
             'input' => [
                 [
                     'type' => 'text',
-                    'label' => $this->module->l('Nombre de la App'), // CORREGIDO
+                    'label' => $this->module->l('Nombre de la App'),
                     'name' => 'name',
                     'required' => true,
                     'hint' => $this->module->l('Ej: Yape, Plin, PayPal'),
                 ],
                 [
                     'type' => 'text',
-                    'label' => $this->module->l('Teléfono o Número de Cuenta'), // CORREGIDO
+                    'label' => $this->module->l('Teléfono o Número de Cuenta'),
                     'name' => 'phone',
                 ],
                 [
                     'type' => 'text',
-                    'label' => $this->module->l('Email (Opcional)'), // CORREGIDO
+                    'label' => $this->module->l('Email (Opcional)'),
                     'name' => 'email',
                 ],
                 [
                     'type' => 'file',
-                    'label' => $this->module->l('Icono Pequeño'), // CORREGIDO
+                    'label' => $this->module->l('Icono Pequeño'),
                     'name' => 'icon_path',
                     'display_image' => true,
                     'image' => $icon_url ? '<img src="'.$icon_url.'" style="max-width: 80px;"/>' : false,
                 ],
                 [
                     'type' => 'file',
-                    'label' => $this->module->l('Código QR (Imagen)'), // CORREGIDO
+                    'label' => $this->module->l('Código QR (Imagen)'),
                     'name' => 'image_path',
                     'display_image' => true,
                     'image' => $qr_url ? '<img src="'.$qr_url.'" style="max-width: 150px;"/>' : false,
                 ],
                 [
                     'type' => 'text',
-                    'label' => $this->module->l('Monto Máximo'), // CORREGIDO
+                    'label' => $this->module->l('Monto Máximo'),
                     'name' => 'max_amount',
                     'prefix' => $this->context->currency->sign,
                 ],

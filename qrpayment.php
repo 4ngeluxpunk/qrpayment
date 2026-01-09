@@ -1,7 +1,4 @@
 <?php
-/**
- * Módulo de Pagos QR - Versión 4.2.8 (Fixed & Universal)
- */
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -20,7 +17,7 @@ class QrPayment extends PaymentModule
         $this->need_instance = 1;
         $this->bootstrap = true;
         $this->controllers = array('process', 'validation');
-        $this->ps_versions_compliancy = array('min' => '1.7.0', 'max' => '9.99.99');
+        $this->ps_versions_compliancy = ['min' => '1.7', 'max' => _PS_VERSION_];
 
         parent::__construct();
 
@@ -31,7 +28,6 @@ class QrPayment extends PaymentModule
 
     public function install()
     {
-        // Crear directorios necesarios
         $dirs = [
             _PS_MODULE_DIR_ . $this->name . '/img/',
             _PS_ROOT_DIR_ . '/img/vouchers/',
@@ -43,7 +39,6 @@ class QrPayment extends PaymentModule
             if (!file_exists($dir . 'index.php')) { file_put_contents($dir . 'index.php', ''); }
         }
 
-        // Configs por defecto
         if (!Configuration::hasKey('QRPAYMENT_TITLE')) Configuration::updateValue('QRPAYMENT_TITLE', 'Pago con la aplicación QR');
         if (!Configuration::hasKey('QRPAYMENT_DESC')) Configuration::updateValue('QRPAYMENT_DESC', 'Escanea el código QR y adjunta tu comprobante.');
         
@@ -71,7 +66,6 @@ class QrPayment extends PaymentModule
             $output .= $this->postProcessConfig();
         }
 
-        // Obtener enlace al controlador (PrestaShop gestiona la redirección)
         $app_manager_url = $this->context->link->getAdminLink('AdminQrPayment');
         
         $output .= '
@@ -183,11 +177,9 @@ class QrPayment extends PaymentModule
         return $this->displayConfirmation($this->l('Configuración actualizada correctamente.'));
     }
 
-    // --- INSTALACIÓN DE TABS UNIVERSAL ---
-
     public function installTab()
     {
-        $this->uninstallTab(); // Limpieza previa
+        $this->uninstallTab();
 
         $tab = new Tab();
         $tab->active = 1;
@@ -199,7 +191,6 @@ class QrPayment extends PaymentModule
         $tab->id_parent = (int)Tab::getIdFromClassName('AdminParentPayment'); 
         $tab->module = $this->name;
 
-        // CONDICIÓN MÁGICA: Si es PS 9+, usa ruta moderna. Si es PS 8-, usa legacy.
         if (version_compare(_PS_VERSION_, '9.0.0', '>=')) {
             $tab->route_name = 'admin_qrpayment_index'; 
         }

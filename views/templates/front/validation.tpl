@@ -3,7 +3,6 @@
 {block name='content'}
 <div class="qr-modal-wrapper">
     
-    <!-- PASO 1: INFO QR -->
     <div id="qr-step-1">
         <div class="qr-modal-header">
             <h3>{l s='Hacer un pago QR con' mod='qrpayment'} <span style="color:#2fb5d2">{$app.name}</span></h3>
@@ -13,7 +12,6 @@
             <div class="qr-phone-display">{$app.phone}</div>
 
             {if $app.image_path}
-                <!-- Muestra la imagen QR grande -->
                 <img src="{$qr_img_base_url}{$app.image_path}" class="qr-main-img" alt="{$app.name} QR Code" />
             {/if}
 
@@ -30,13 +28,11 @@
         </div>
     </div>
 
-    <!-- PASO 2: SUBIDA VOUCHER -->
     <div id="qr-step-2" style="display:none;">
         <div class="qr-modal-header">
             <h3>{l s='Adjunte la captura de pantalla o voucher' mod='qrpayment'}</h3>
         </div>
         <div class="qr-modal-body">
-            <!-- El formulario envía los datos y el archivo a 'process.php' -->
             <form action="{$action_url}" method="post" enctype="multipart/form-data">
                 
                 <label for="file_upload" class="qr-upload-zone">

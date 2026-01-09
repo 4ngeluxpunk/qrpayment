@@ -10,7 +10,6 @@ class QrPaymentValidationModuleFrontController extends ModuleFrontController
 
         $id_qrpayment = (int)Tools::getValue('qr_app_id');
 
-        // Uso de cast (int) para evitar SQL Injection directo
         if ($id_qrpayment) {
              $app = Db::getInstance()->getRow("SELECT * FROM " . _DB_PREFIX_ . "qrpayment WHERE id_qrpayment = " . $id_qrpayment);
         } else {

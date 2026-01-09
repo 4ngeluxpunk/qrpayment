@@ -1,8 +1,5 @@
 <?php
-/**
- * Clase ObjectModel para la gestión de Apps de Pago QR
- * Segurizada contra SQL Injection
- */
+
 class QrPaymentApp extends ObjectModel
 {
     public $id_qrpayment;
@@ -45,7 +42,6 @@ class QrPaymentApp extends ObjectModel
 
     public function delete()
     {
-        // Validación de rutas para evitar borrado arbitrario
         if ($this->image_path && strpos($this->image_path, '..') === false && file_exists(_PS_MODULE_DIR_ . 'qrpayment/img/' . $this->image_path)) {
             @unlink(_PS_MODULE_DIR_ . 'qrpayment/img/' . $this->image_path);
         }
@@ -63,7 +59,6 @@ class QrPaymentApp extends ObjectModel
 
     public function updatePosition($way, $position)
     {
-        // Sanitización estricta (SQL Injection Prevention)
         $id_qrpayment = (int)$this->id;
         $position = (int)$position;
 
@@ -85,7 +80,6 @@ class QrPaymentApp extends ObjectModel
             return false;
         }
 
-        // Consultas parametrizadas manuales (usando casts estrictos)
         $moved_pos = (int)$moved_app['position'];
 
         return Db::getInstance()->execute('
